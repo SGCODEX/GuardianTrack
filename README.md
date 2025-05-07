@@ -48,3 +48,5 @@ This is a basic simulation and can be expanded in several ways:
 * **Incorporate Sensor Data:** Integrate data from real-world sensors (e.g., temperature sensors, gas detectors) to monitor cargo conditions and trigger alerts in case of emergencies.
 * **Database Integration:** Use a database to store and retrieve cargo information, allowing for persistence and scalability.
 * **GUI Development:** Create a graphical user interface
+
+![ChatGPT Image May 7, 2025, 04_11_12 PM](https://github.com/user-attachments/assets/c819612c-ea88-4931-9142-225597447f9b)
