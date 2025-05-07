@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianTrack</title>
+    <script src="https://cdn.tailwindcss.com"></script> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #map-container {
+            width: 100%;
+            height: 400px; /* Adjust as needed */
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            background-color: #f9fafb; /* Light background for the map */
+        }
+        .cargo-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .cargo-card h3 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+        .cargo-card p {
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-4">GuardianTrack</h1>
+
+        <div id="orange-id-button-container" class="mb-4">
+            </div>
+
+        <div id="user-info-container" class="bg-white rounded-md shadow-md p-4 mb-4 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">Welcome, <span id="user-name"></span></h2>
+            <p class="text-gray-600 mb-4">User ID: <span id="user-id"></span></p>
+        </div>
+
+        <div id="map-container" class="mb-4">
+            <div class="flex justify-center items-center h-full text-gray-500">
+                Map Placeholder (Replace with actual map component)
+            </div>
+        </div>
+
+        <div id="cargo-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+    </div>
+
+    <script>
+    const tenantId = 'orange-ljhoozao3r'; // Replace with your actual tenant ID
+    const authCallbackUrl = 'https://yourdomain.com/auth/callback'; // Replace with your actual callback URL
+    const orangeIdButtonContainer = document.getElementById('orange-id-button-container');
+    const userInfoContainer = document.getElementById('user-info-container');
+    const userNameDisplay = document.getElementById('user-name');
+    const userIdDisplay = document.getElementById('user-id');
+    const cargoListContainer = document.getElementById('cargo-list-container');
+
+    // Function to fetch cargo data from your backend API
+    async function fetchCargoData() {
+        try {
+            const response = await fetch('/api/cargo'); //  Replace with your actual API endpoint
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            displayCargoData(data);
+        } catch (error) {
+            console.error('Error fetching cargo data:', error);
+            //  Display an error message to the user
+            cargoListContainer.innerHTML = `<div class="text-red-500">Error: ${error.message}</div>`;
+        }
+    }
+
+    // Function to display cargo data
+    function displayCargoData(cargoData) {
+        cargoListContainer.innerHTML = ''; // Clear previous content
+        cargoData.forEach(cargo => {
+            const cargoCard = document.createElement('div');
+            cargoCard.className = 'cargo-card';
+            cargoCard.innerHTML = `
+                <h3>${cargo.cargo_id}</h3>
+                <p>Type: ${cargo.cargo_type}</p>
+                <p>Location: ${cargo.location}</p>
+                <p>Hazard: ${cargo.hazard_label || 'None'}</p>
+            `;
+            cargoListContainer.appendChild(cargoCard);
+        });
+    }
+
+    // Initialize Orange ID (using the script tag method)
+    window.onload = function() {
+        const orangeIdInstance = new window.BedrockPassport.default({ // Corrected
+            tenantId: tenantId,
+            callbackUrl: authCallbackUrl,
+            // Add other configurations as necessary (e.g., baseUrl)
+        });
+
+        const loginButton = orangeIdInstance.renderLoginButton({
+            container: orangeIdButtonContainer,
+            // Customize the button appearance if needed.  Tailwind classes can be applied here.
+            buttonText: 'Login with Orange ID', //Set the button text
+            className: 'bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded',
+        });
+
+        //Check for existing session
+        orangeIdInstance.checkSession().then(session => {
+            if (session) {
+                // User is logged in
+                console.log("Session found:", session);
+                fetchCargoData(); // Fetch and display data after successful login
+                userInfoContainer.classList.remove('hidden');
+                userNameDisplay.textContent = session.user.name;
+                userIdDisplay.textContent = session.user.id;
+            } else {
+                console.log("No session found.");
+            }
+        }).catch(error => {
+            console.error("Error checking session:", error);
+        });
+
+        // Handle login success (after the user authenticates with Orange ID)
+        orangeIdInstance.on('login', (session) => {
+            console.log('Login successful!', session);
+            fetchCargoData(); // Fetch cargo data
+            userInfoContainer.classList.remove('hidden');
+            userNameDisplay.textContent = session.user.name;
+            userIdDisplay.textContent = session.user.id;
+            //  You might also want to redirect the user to a different page here.
+        });
+
+        // Handle logout
+        orangeIdInstance.on('logout', () => {
+            console.log('Logged out!');
+            userInfoContainer.classList.add('hidden');
+            cargoListContainer.innerHTML = ''; // Clear cargo data
+            //  Redirect the user or update the UI as needed.
+        });
+    };
+    </script>
+</body>
+</html>
